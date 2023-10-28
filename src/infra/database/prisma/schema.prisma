@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "src/infra/database"
 }
 
 datasource db {
@@ -12,14 +11,14 @@ model User {
   id               String        @id @default(uuid())
   name             String
   email            String        @unique
-  documents        String        @unique
   password         String
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
   deleteAt         DateTime?     @map("deleted_at")
+  document         String        @unique
   MoneyInput       MoneyInput[]
-  MoneyOutputUser  MoneyOutput[] @relation("user")
   MoneyOutputOwner MoneyOutput[] @relation("owner")
+  MoneyOutputUser  MoneyOutput[] @relation("user")
   OutputType       OutputType[]
 
   @@map("tb_user")
@@ -28,11 +27,12 @@ model User {
 model MoneyInput {
   id            String   @id @default(uuid())
   userId        String   @map("user_id")
-  user          User     @relation(fields: [userId], references: [id])
   amount        Float
   justification String
   createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
 
+  @@index([userId], map: "tb_money_input_user_id_fkey")
   @@map("tb_money_input")
 }
 
@@ -40,18 +40,20 @@ model MoneyOutput {
   id           String     @id @default(uuid())
   userId       String     @map("user_id")
   ownerId      String     @map("owner_id")
-  user         User       @relation("user", fields: [userId], references: [id])
-  owner        User       @relation("owner", fields: [ownerId], references: [id])
   outputTypeId String     @map("output_type_id")
   outputType   OutputType @relation(fields: [outputTypeId], references: [id])
+  owner        User       @relation("owner", fields: [ownerId], references: [id])
+  user         User       @relation("user", fields: [userId], references: [id])
 
+  @@index([outputTypeId], map: "tb_money_output_output_type_id_fkey")
+  @@index([ownerId], map: "tb_money_output_owner_id_fkey")
+  @@index([userId], map: "tb_money_output_user_id_fkey")
   @@map("tb_money_output")
 }
 
 model OutputType {
   id          String         @id @default(uuid())
   userId      String         @map("user_id")
-  user        User           @relation(fields: [userId], references: [id])
   type        OutputTypeEnum
   description String
   institution String?
@@ -59,7 +61,9 @@ model OutputType {
   goodDay     DateTime?      @map("good_day")
   dueDate     DateTime?      @map("due_date")
   MoneyOutput MoneyOutput[]
+  user        User           @relation(fields: [userId], references: [id])
 
+  @@index([userId], map: "tb_output_type_user_id_fkey")
   @@map("tb_output_type")
 }
 
