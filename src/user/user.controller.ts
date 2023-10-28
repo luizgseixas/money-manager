@@ -1,41 +1,27 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Inject } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { RegisterUserUsecase } from './common/interfaces/register-user';
+import { REGISTER_USER_USECASE } from './common/contants/usecase';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: any) {}
+  constructor(
+    @Inject(REGISTER_USER_USECASE)
+    private readonly registerUserUsecase: RegisterUserUsecase,
+  ) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+    return this.registerUserUsecase.execute(createUserDto);
   }
 
   @Get()
   findAll() {
-    return this.userService.findAll();
+    // return this.userService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    // return this.userService.findOne(+id);
   }
 }

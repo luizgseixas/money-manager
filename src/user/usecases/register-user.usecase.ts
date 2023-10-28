@@ -1,18 +1,27 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { SaveUserRepository } from '../common/intefaces/save-user.repository';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  SaveUserRepository,
+  FindUserByDocumentOrEmailRepository,
+} from '../common/interfaces/repository';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { GetUserByDocumentOrEmailRepository } from '../common/intefaces/get-user-by-document-or-email.repository';
+import { RegisterUserUsecase } from '../common/interfaces/register-user';
+import {
+  FIND_USER_BY_DOCUMENT_OR_EMAIL_REPOSITORY,
+  SAVE_USER_REPOSITORY,
+} from '../common/contants/repository';
 
 @Injectable()
-export class DbRegisterUserUsecase {
+export class DbRegisterUserUsecase implements RegisterUserUsecase {
   constructor(
-    private readonly getUserByDocumentOrEmailRepository: GetUserByDocumentOrEmailRepository,
+    @Inject(FIND_USER_BY_DOCUMENT_OR_EMAIL_REPOSITORY)
+    private readonly findUserByDocumentOrEmailRepository: FindUserByDocumentOrEmailRepository,
+    @Inject(SAVE_USER_REPOSITORY)
     private readonly saveUserRepository: SaveUserRepository,
   ) {}
 
   public async execute(user: CreateUserDto) {
     const userAlreadyExist =
-      await this.getUserByDocumentOrEmailRepository.getByDocumentOrEmail(
+      await this.findUserByDocumentOrEmailRepository.findByDocumentOrEmail(
         user.document,
         user.email,
       );
