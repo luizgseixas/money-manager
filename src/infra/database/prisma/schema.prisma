@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "src/infra/database"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(uuid())
+  name             String
+  email            String        @unique
+  documents        String        @unique
+  password         String
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  deleteAt         DateTime?     @map("deleted_at")
+  MoneyInput       MoneyInput[]
+  MoneyOutputUser  MoneyOutput[] @relation("user")
+  MoneyOutputOwner MoneyOutput[] @relation("owner")
+  OutputType       OutputType[]
+
+  @@map("tb_user")
+}
+
+model MoneyInput {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id])
+  amount        Float
+  justification String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("tb_money_input")
+}
+
+model MoneyOutput {
+  id           String     @id @default(uuid())
+  userId       String     @map("user_id")
+  ownerId      String     @map("owner_id")
+  user         User       @relation("user", fields: [userId], references: [id])
+  owner        User       @relation("owner", fields: [ownerId], references: [id])
+  outputTypeId String     @map("output_type_id")
+  outputType   OutputType @relation(fields: [outputTypeId], references: [id])
+
+  @@map("tb_money_output")
+}
+
+model OutputType {
+  id          String         @id @default(uuid())
+  userId      String         @map("user_id")
+  user        User           @relation(fields: [userId], references: [id])
+  type        OutputTypeEnum
+  description String
+  institution String?
+  amountLimit Float?
+  goodDay     DateTime?      @map("good_day")
+  dueDate     DateTime?      @map("due_date")
+  MoneyOutput MoneyOutput[]
+
+  @@map("tb_output_type")
+}
+
+enum OutputTypeEnum {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  MONEY
+  BILLET
+}
