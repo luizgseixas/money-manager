@@ -1,14 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
-import { GetUserByDocumentOrEmailRepository } from '../../../src/user/common/intefaces/get-user-by-document-or-email.repository';
-import { SaveUserRepository } from '../../../src/user/common/intefaces/save-user.repository';
+import {
+  FindUserByDocumentOrEmailRepository,
+  SaveUserRepository,
+} from '../../../src/user/common/interfaces/repository';
 import { CreateUserDto } from '../../../src/user/dto/create-user.dto';
 import { DbRegisterUserUsecase } from '../../../src/user/usecases/register-user.usecase';
 import { User } from '../../../src/user/entities/user.entity';
+import { HashPassword } from 'src/user/common/interfaces/hash-password';
 
 describe('DbRegisterUserUsecase', () => {
   let sut: DbRegisterUserUsecase;
-  let getUserByDocumentOrEmailRepository: GetUserByDocumentOrEmailRepository;
+  let findUserByDocumentOrEmailRepository: FindUserByDocumentOrEmailRepository;
   let saveUserRepository: SaveUserRepository;
+  let hashPasswordProvider: HashPassword;
 
   const createUserMock: CreateUserDto = {
     name: 'any_user_name',
@@ -28,21 +32,25 @@ describe('DbRegisterUserUsecase', () => {
   };
 
   beforeAll(() => {
-    getUserByDocumentOrEmailRepository = {
-      getByDocumentOrEmail: jest.fn().mockResolvedValue(null),
+    findUserByDocumentOrEmailRepository = {
+      findByDocumentOrEmail: jest.fn().mockResolvedValue(null),
     };
     saveUserRepository = { save: jest.fn() };
+    hashPasswordProvider = {
+      execute: jest.fn().mockResolvedValue('hashed_password'),
+    };
   });
 
   beforeEach(() => {
     sut = new DbRegisterUserUsecase(
-      getUserByDocumentOrEmailRepository,
+      findUserByDocumentOrEmailRepository,
       saveUserRepository,
+      hashPasswordProvider,
     );
   });
 
   test('should be defined', async () => {
-    expect(getUserByDocumentOrEmailRepository).toBeDefined();
+    expect(findUserByDocumentOrEmailRepository).toBeDefined();
     expect(saveUserRepository).toBeDefined();
     expect(sut).toBeDefined();
   });
@@ -51,13 +59,13 @@ describe('DbRegisterUserUsecase', () => {
     await sut.execute(createUserMock);
 
     expect(
-      getUserByDocumentOrEmailRepository.getByDocumentOrEmail,
+      findUserByDocumentOrEmailRepository.findByDocumentOrEmail,
     ).toHaveBeenCalledWith('any_document', 'any_email@mail.com');
   });
 
   test('should throw a BadRequestException if GetUserByDocumentOrEmailRepository return a user', async () => {
     jest
-      .spyOn(getUserByDocumentOrEmailRepository, 'getByDocumentOrEmail')
+      .spyOn(findUserByDocumentOrEmailRepository, 'findByDocumentOrEmail')
       .mockResolvedValueOnce(userMock);
 
     const promise = sut.execute(createUserMock);
@@ -67,9 +75,20 @@ describe('DbRegisterUserUsecase', () => {
     );
   });
 
+  test('should call HashPasswordProvider with correct params', async () => {
+    await sut.execute(createUserMock);
+
+    expect(hashPasswordProvider.execute).toHaveBeenCalledWith('any_password');
+  });
+
   test('should call saveUserRepository with correct params', async () => {
     await sut.execute(createUserMock);
 
-    expect(saveUserRepository.save).toHaveBeenCalledWith(createUserMock);
+    expect(saveUserRepository.save).toHaveBeenCalledWith({
+      name: 'any_user_name',
+      email: 'any_email@mail.com',
+      document: 'any_document',
+      password: 'hashed_password',
+    });
   });
 });
