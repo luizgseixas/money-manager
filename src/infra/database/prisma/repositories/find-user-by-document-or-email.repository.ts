@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FindUserByDocumentOrEmailRepository } from 'src/user/common/interfaces/repository';
+import { FindUserByDocumentOrEmailRepository } from '../../../../user/common/interfaces/user-repository';
 import { User } from 'src/user/entities/user.entity';
 import { PrismaService } from '..';
 
@@ -13,10 +13,12 @@ export class PrismaFindUserByDocumentOrEmailRepository
     document?: string,
     email?: string,
   ): Promise<User> {
-    return this.prismaService.user.findFirst({
+    const user = await this.prismaService.user.findFirst({
       where: {
         OR: [{ document }, { email }],
       },
     });
+
+    return new User(user);
   }
 }
