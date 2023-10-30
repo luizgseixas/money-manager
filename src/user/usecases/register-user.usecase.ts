@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   SaveUserRepository,
   FindUserByDocumentOrEmailRepository,
-} from '../common/interfaces/repository';
+} from '../common/interfaces/user-repository';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { RegisterUserUsecase } from '../common/interfaces/register-user';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../common/contants/repository';
 import { HASH_PASSWORD_PROVIDER } from '../common/contants/hash';
 import { HashPassword } from '../common/interfaces/hash-password';
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class DbRegisterUserUsecase implements RegisterUserUsecase {
@@ -23,18 +24,20 @@ export class DbRegisterUserUsecase implements RegisterUserUsecase {
     private readonly hashPasswordProvider: HashPassword,
   ) {}
 
-  public async execute(user: CreateUserDto) {
+  public async execute(userProps: CreateUserDto) {
     const userAlreadyExist =
       await this.findUserByDocumentOrEmailRepository.findByDocumentOrEmail(
-        user.document,
-        user.email,
+        userProps.document,
+        userProps.email,
       );
     if (userAlreadyExist) throw new BadRequestException('Usuário já existe');
 
     const hashedPassword = await this.hashPasswordProvider.execute(
-      user.password,
+      userProps.password,
     );
-    user.password = hashedPassword;
+    userProps.password = hashedPassword;
+
+    const user = new User(userProps);
 
     await this.saveUserRepository.save(user);
   }
