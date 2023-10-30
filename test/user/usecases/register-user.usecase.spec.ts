@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import {
   FindUserByDocumentOrEmailRepository,
   SaveUserRepository,
-} from '../../../src/user/common/interfaces/repository';
+} from '../../../src/user/common/interfaces/user-repository';
 import { CreateUserDto } from '../../../src/user/dto/create-user.dto';
 import { DbRegisterUserUsecase } from '../../../src/user/usecases/register-user.usecase';
 import { User } from '../../../src/user/entities/user.entity';
@@ -17,19 +17,19 @@ describe('DbRegisterUserUsecase', () => {
   const createUserMock: CreateUserDto = {
     name: 'any_user_name',
     email: 'any_email@mail.com',
-    document: 'any_document',
+    document: '12345678909',
     password: 'any_password',
   };
 
-  const userMock: User = {
+  const userMock: User = new User({
     id: 'any_user_id',
     name: 'any_user_name',
     email: 'any_email@mail.com',
-    document: 'any_document',
+    document: '12345678909',
     password: 'any_password',
     createdAt: new Date('2023-10-27'),
     updatedAt: new Date('2023-10-27'),
-  };
+  });
 
   beforeAll(() => {
     findUserByDocumentOrEmailRepository = {
@@ -60,7 +60,7 @@ describe('DbRegisterUserUsecase', () => {
 
     expect(
       findUserByDocumentOrEmailRepository.findByDocumentOrEmail,
-    ).toHaveBeenCalledWith('any_document', 'any_email@mail.com');
+    ).toHaveBeenCalledWith('12345678909', 'any_email@mail.com');
   });
 
   test('should throw a BadRequestException if GetUserByDocumentOrEmailRepository return a user', async () => {
@@ -87,7 +87,7 @@ describe('DbRegisterUserUsecase', () => {
     expect(saveUserRepository.save).toHaveBeenCalledWith({
       name: 'any_user_name',
       email: 'any_email@mail.com',
-      document: 'any_document',
+      document: '12345678909',
       password: 'hashed_password',
     });
   });
