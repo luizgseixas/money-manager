@@ -7,6 +7,10 @@ export const validateCpf = (cpf: string): boolean => {
     return false;
   }
 
+  if (cpf === '00000000000') {
+    return false;
+  }
+
   // Calcula o primeiro dígito verificador
   let soma = 0;
   for (let i = 0; i < 9; i++) {
